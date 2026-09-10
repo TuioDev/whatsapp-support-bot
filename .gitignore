@@ -1,0 +1,54 @@
+﻿# ---- Secrets ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+
+# ---- Docker volumes / runtime data ----
+n8n_data/
+postgres_data/
+qdrant_data/
+chatwoot_data/
+ollama_data/
+storage/
+*.sqlite
+*.sqlite3
+database.sqlite
+
+# ---- n8n exports ----
+workflows/*.local.json
+*.backup.json
+
+# ---- Node ----
+node_modules/
+npm-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+dist/
+build/
+
+# ---- Python (if you add ingestion scripts) ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# ---- Tunnels / local overrides ----
+docker-compose.override.yml
+.cloudflared/
+ngrok.yml
+
+# ---- OS / editor ----
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# ---- Logs / temp ----
+*.log
+logs/
+tmp/
