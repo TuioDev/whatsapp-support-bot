@@ -402,6 +402,21 @@ def _chunks(text: str, limit: int = TEXT_CHUNK_LIMIT) -> Iterator[str]:
         yield text
 
 
+def reply_address(wa_id: str) -> str:
+    """The number to send to, restoring the 9th digit of Brazilian mobiles.
+
+    Webhooks report Brazilian mobiles in the pre-2016 12-digit form
+    (55 + area code + 8 digits), while the number the customer registered -
+    and the one on a test number's allowed list - has a 9 before those 8
+    digits. Sending to the 12-digit form fails with 131030 on the test number,
+    so put the 9 back. Mobile subscriber numbers start with 6-9; landlines
+    (2-5) never got the extra digit and are left alone.
+    """
+    if len(wa_id) == 12 and wa_id.startswith("55") and wa_id[4] in "6789":
+        return f"{wa_id[:4]}9{wa_id[4:]}"
+    return wa_id
+
+
 async def send_text(to: str, body: str) -> None:
     """Deliver a text reply through the WhatsApp Cloud API."""
     url = (
@@ -436,19 +451,19 @@ async def send_text(to: str, body: str) -> None:
 async def handle_message(message: Incoming) -> None:
     if FIXED_REPLY:
         log.info("fixed reply to %s (%s)", message.wa_id, message.kind)
-        await send_text(message.wa_id, FIXED_REPLY)
+        await send_text(reply_address(message.wa_id), FIXED_REPLY)
         return
 
     if message.text is None:
         log.info("unsupported message type %s from %s", message.kind, message.wa_id)
-        await send_text(message.wa_id, UNSUPPORTED_REPLY)
+        await send_text(reply_address(message.wa_id), UNSUPPORTED_REPLY)
         return
 
     log.info("message from %s (%s)", message.profile_name or "?", message.wa_id)
     answer = await ask_gemini(message.text, _cache.thread_id(message.wa_id))
     if answer.status == "ok" and answer.thread_id:
         _cache.set_thread_id(message.wa_id, answer.thread_id)
-    await send_text(message.wa_id, answer.text)
+    await send_text(reply_address(message.wa_id), answer.text)
 
 
 # --------------------------------------------------------------------------- #
