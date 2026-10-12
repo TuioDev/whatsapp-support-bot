@@ -1,0 +1,8 @@
+# Never upload local secrets or build junk; set env vars in the Vercel dashboard.
+.env
+.env.*
+!.env.example
+.venv/
+.idea/
+__pycache__/
+*.egg-info/

@@ -1,0 +1,25 @@
+[project]
+name = "whatsapp-support-bot"
+version = "0.1.0"
+description = "WhatsApp customer-support webhook (Meta Cloud API) answered by Gemini."
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",   # ASGI app + request handling
+    "google-genai>=2.23", # Gemini Interactions API client (async)
+    "httpx>=0.27",      # outbound calls to the WhatsApp Graph API
+]
+
+[project.optional-dependencies]
+# Not installed on the host: uvicorn serves the app locally and python-dotenv
+# loads .env, which app.py imports only if it is present.
+dev = [
+    "uvicorn[standard]>=0.30",
+    "python-dotenv>=1.0",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["app"]
