@@ -281,6 +281,26 @@ def incoming_messages(payload: dict[str, Any]) -> list[Incoming]:
     return found
 
 
+def log_failed_statuses(payload: dict[str, Any]) -> None:
+    """Log delivery failures Meta reports after a send was accepted.
+
+    A 200 from the send call only means Meta queued the message; when it later
+    cannot deliver it, the reason arrives as a `failed` status on the webhook.
+    """
+    for entry in payload.get("entry") or []:
+        for change in entry.get("changes") or []:
+            for status in (change.get("value") or {}).get("statuses") or []:
+                if status.get("status") != "failed":
+                    continue
+                for err in status.get("errors") or [{}]:
+                    log.error(
+                        "delivery to %s failed (%s): %s",
+                        status.get("recipient_id"),
+                        err.get("code"),
+                        err.get("message") or err.get("title"),
+                    )
+
+
 def valid_signature(raw_body: bytes, header: str) -> bool:
     """Check Meta's X-Hub-Signature-256 against the raw request body."""
     if not WHATSAPP_APP_SECRET or not header.startswith("sha256="):
@@ -505,6 +525,7 @@ async def receive_webhook(request: Request) -> Response:
         log.warning("rejected: body is not JSON")
         return JSONResponse({"error": "invalid json"}, status_code=400)
 
+    log_failed_statuses(payload)
     for message in incoming_messages(payload):
         if _cache.already_handled(message.message_id):
             log.info("duplicate delivery of %s, skipped", message.message_id)
